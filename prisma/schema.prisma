@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  role      Role     @default(PATIENT)
+  createdAt DateTime @default(now())
+
+  doctor  Doctor?
+  patient Patient?
+  nurse   Nurse?
+}
+
+enum Role {
+  ADMIN
+  DOCTOR
+  NURSE
+  PATIENT
+}
+
+model Doctor {
+  id             Int           @id @default(autoincrement())
+  firstName      String
+  lastName       String
+  specialization String
+  userId         Int           @unique
+  user           User          @relation(fields: [userId], references: [id])
+  appointments   Appointment[]
+}
+
+model Nurse {
+  id        Int    @id @default(autoincrement())
+  firstName String
+  lastName  String
+  userId    Int    @unique
+  user      User   @relation(fields: [userId], references: [id])
+}
+
+model Patient {
+  id           Int           @id @default(autoincrement())
+  firstName    String
+  lastName     String
+  dateOfBirth  DateTime
+  userId       Int           @unique
+  user         User          @relation(fields: [userId], references: [id])
+  appointments Appointment[]
+}
+
+model Appointment {
+  id        Int               @id @default(autoincrement())
+  dateTime  DateTime
+  status    AppointmentStatus @default(PENDING)
+  reason    String
+  notes     String?
+  doctorId  Int
+  patientId Int
+  doctor    Doctor            @relation(fields: [doctorId], references: [id])
+  patient   Patient           @relation(fields: [patientId], references: [id])
+  diagnosis Diagnosis?
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model Diagnosis {
+  id            Int         @id @default(autoincrement())
+  description   String
+  prescription  String?
+  appointmentId Int         @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+}
